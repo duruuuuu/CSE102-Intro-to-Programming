@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX 250
+// variable declaration
+int maxl = MAX;
+char buff[MAX];
+int totalCount = 0;
+int parenthesesCount = 0;
+//file write
+FILE *INPUT;
+FILE *OUTPUT;
+// function declaration
+int recursive( int count );
+
+int main()
+{
+  char *input = "input.txt";
+  char *output = "output.txt";
+  INPUT = fopen(input, "r");
+  OUTPUT = fopen(output, "w+");
+  //starts by counting the number of elements in the file
+  while(fscanf(INPUT, "%s", buff)!=EOF)
+  {
+   size_t i = 0;
+   for (; i < maxl; i++) 
+   {
+    if ( buff[i] != '\0' ) 
+    {
+     totalCount++;
+    }
+   }
+  }
+    recursive(totalCount);
+
+    fclose(INPUT);
+    return 0;
+}
+/*recursive function to count the open and close parentheses and print the characters with the  
+  respective amounts of dashes.
+  This function counts how many dashes there should be by increasing the parenthesis count when 
+  there is an open parenthesis and decreasing the parenthesis count then there is a close parenthesis.
+  The number of dashes is equal to the number of parentheses at the time of scanning the current     
+  character*/
+int recursive( int n ) 
+{
+    int sm = 1;
+    if (n != -1) 
+    {
+        int index = totalCount - n - sm ;//n will be the totalCount (amount of elements)
+        if ( index != -1 ) 
+	{
+            char c = buff[index];
+            //increase parenthesis
+            if ( c == '(' ) 
+            {
+                parenthesesCount++;
+            }    
+            if ( c != '(' && c != ',' && c != ')' ) 
+	    //if the character is not a paranthesis or dash, it will print the character and
+  	    //it will also print the dashes according to the parenthesis count
+  		{
+                int j;
+                for (j = 0; j<parenthesesCount; j++) 
+		{
+                    fprintf(OUTPUT, "-");
+                }
+                fprintf(OUTPUT,"%c\n", c);
+            }
+	    //decrease parenthesis
+            if ( c == ')' ) 
+	    {
+                parenthesesCount--;
+            } 
+        }
+        sm++;
+        return recursive(n-1);
+    }
+    else 
+    {
+	fclose(OUTPUT);
+        return n;
+    }
+}
