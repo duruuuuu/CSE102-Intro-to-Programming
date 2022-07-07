@@ -63,8 +63,3 @@ double func(char string[MAX])
    }
 
 }
-
-
-
-
-
