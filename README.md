@@ -1,1 +1,1 @@
-My programs/assignment submissions for my C language Computer Programming Class.
+programs/assignment submissions for C language Computer Programming Class.
