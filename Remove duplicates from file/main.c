@@ -48,6 +48,7 @@ int main()
     }
     // closing file
     fclose(fptr);
+    fclose(compfp);
   
     return 0;
 }
