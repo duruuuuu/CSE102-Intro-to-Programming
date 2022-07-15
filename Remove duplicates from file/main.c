@@ -19,20 +19,19 @@ int main()
     while(fscanf(fptr, "%d", &currNum) != EOF)
     {
         numOfDigit = findDigitCount(currNum);
-        printf("current element: %d\n", currNum);
         pos1 = ftell(fptr);
+        
         int compNum;
         while(fscanf(compfp, "%d", &compNum) != EOF)
         {
             pos2 = ftell(compfp);
-            printf("compare element: %d\n", compNum);
             if(compNum == currNum && pos2 < pos1)
             {
                 if(currNum > 0)
                 {
                     fseek(fptr, -numOfDigit, SEEK_CUR);
                     for(int i=0; i<numOfDigit; i++)
-                    fputs(" ", fptr);
+                        fputs(" ", fptr);
                 }
 
                 else if(currNum < 0)
@@ -40,13 +39,14 @@ int main()
                     numOfDigit += 1;
                     fseek(fptr, -numOfDigit, SEEK_CUR);
                     for(int i=0; i<numOfDigit; i++)
-                    fputs(" ", fptr); 
+                        fputs(" ", fptr); 
                 }
             }
         }
         rewind(compfp);
     }
-    // closing file
+    
+    
     fclose(fptr);
     fclose(compfp);
   
