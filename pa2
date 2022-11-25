@@ -1,112 +1,106 @@
 #include <stdio.h>
-#include <stdlib.h>
+
+#define MAX 100
 
 int main()
 {
+    FILE *input;
+    FILE *output;
 
-    char *inputFile = "input.txt";
-    char *outputFile = "output.txt";
-    FILE *INPUT;
-    FILE *OUTPUT;
+    input = fopen("input.txt", "r");
+    output = fopen("output.txt", "w");
 
-    char array[100];
-    char buffer[100];
-    int id = 0;
+    int numArr[MAX], index = 0, num;
 
-    INPUT = fopen(inputFile, "r");
-
-    // scans and counts each element in the file and fills the buffer
-    while (fscanf(INPUT, "%s", buffer) != EOF)
+    // scanning contents of file and adding them to the buffer
+    while (fscanf(input, "%d", &num) != EOF)
     {
-        int num = (int)atoi(buffer); // converts elements of file to int type
-        array[id] = num;             // fills contents of array with however many elements are in num
-        id = id + 1;                 // counts the elements in the file
+        numArr[index] = num;
+        index++; // index will also serve as the number of elements in the file
     }
 
-    int index = 0; // specific element in array
-    int sub_index = 0;
-    int sub_index_2 = 0;
-    int numArr[id];      // stores the individual elements
-    int numArrCount[id]; // stores the number of repititions of each element
-
-    for (index = 0; index < id; index++)
+    // counting the number of occurrences of an element in the array
+    int countArr[index];
+    for (int j = 0; j < index; j++)
     {
-        int number = array[index]; // number= the specific integer element
-        int count = 0;             // count= number of times an element is repeated
+        int currNum = numArr[j];
+        int count = 0;
 
-        for (sub_index = 0; sub_index < id; sub_index++)
+        // counting the number of occurences of current element
+        for (int k = 0; k < index; k++)
         {
-            // sub_number= the element that is being compared to number
-            int sub_number = array[sub_index];
-            if (number == sub_number) // counts the number of times an element is repeated
-            {
-                count = count + 1;
-            }
+            int compNum = numArr[k];
+            if (currNum == compNum)
+                count++;
         }
 
-        // fills the arrays taht will be printed in output
-        for (sub_index_2 = 0; sub_index_2 < id; sub_index_2++)
+        // placing count of element to corresponding array index
+        for (int m = 0; m < index; m++)
         {
-            int sub_number = array[sub_index_2];
-            if (sub_number == number)
-            {
-                numArr[sub_index_2] = number;
-                numArrCount[sub_index_2] = count;
-            }
+            int compNum = numArr[m];
+            if (compNum == currNum)
+                countArr[m] = count;
         }
     }
 
-    int i, j, k;
-    for (i = 0; i < id; i++)
+    // removing duplicates from array
+    for (int x = 0; x < index; x++)
     {
-        for (j = i + 1; j < id;)
+        for (int y = x + 1; y < index; y++)
         {
-            if (numArr[j] == numArr[i])
+            if (numArr[x] == numArr[y])
             {
-                for (k = j; k < id; k++)
+                for (int k = y; k < index; k++)
                 {
                     numArr[k] = numArr[k + 1];
-                    numArrCount[k] = numArrCount[k + 1];
+                    countArr[k] = countArr[k + 1];
                 }
-                id--;
+
+                index--;
+                y--;
             }
-            else
-                j++;
         }
     }
 
-    int temp, x, n;
-    for (temp = 1; temp < id; temp++)
+    // sorting arrays
+    for (int x = 0; x < index; x++)
     {
-        for (i = 0; i < id - 1; i++)
+        for (int y = x + 1; y < index; y++)
         {
-            if (numArrCount[i] > numArrCount[i + 1])
+            // sorting both arrays by count
+            if (countArr[x] > countArr[y])
             {
-                n = numArr[i];
-                x = numArrCount[i];
+                int tempC = countArr[x];
+                int tempN = numArr[x];
 
-                numArrCount[i] = numArrCount[i + 1];
-                numArr[i] = numArr[i + 1];
+                countArr[x] = countArr[y];
+                numArr[x] = numArr[y];
 
-                numArrCount[i + 1] = x;
-                numArr[i + 1] = n;
+                countArr[y] = tempC;
+                numArr[y] = tempN;
+            }
+
+            // sorting numbers array by value if count is the same
+            if (numArr[x] > numArr[y] && countArr[x] == countArr[y])
+            {
+                int tempN = numArr[x];
+                numArr[x] = numArr[y];
+                numArr[y] = tempN;
             }
         }
     }
 
-    // creating output file
-    OUTPUT = fopen(outputFile, "w+");
-
-    // prints arrays of the numbers and amounts of repitions in the new output file
-    for (i = 0; i < id; i++)
+    // printing results to output file
+    for (int z = 0; z < index; z++)
     {
-        int n = numArr[i];
-        int c = numArrCount[i];
-        fprintf(OUTPUT, "%d:%d\n", n, c);
+        int n = numArr[z];
+        int c = countArr[z];
+
+        fprintf(output, "%d:%d\n", n, c);
     }
 
-    fclose(INPUT);
-    fclose(OUTPUT);
+    fclose(input);
+    fclose(output);
 
     return 0;
 }
