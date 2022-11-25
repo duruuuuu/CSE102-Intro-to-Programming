@@ -1,106 +1,91 @@
-#include <stdio.h>
+/*
+    ABOUT EFFICIENCY
+    Assume that n is the number of numbers in the input.txt
+    - Each time it reads a number, the program iterates 100 times at most.
+    - After reading the input file, the output is sorted. There is a nested loop
+    in the sorting alogrithm, they both iterates 100 times.
+    - If time complexity is considered in terms of efficiency, the program iterates
+    n times where n is the number of numbers in the input file.
+*/
 
+#include <stdio.h>
 #define MAX 100
+
+void swap(int arr[], int x, int y);
+void sortOutput(int countArr[], int numArr[], int index);
 
 int main()
 {
-    FILE *input;
-    FILE *output;
+    FILE *input, *output;
 
     input = fopen("input.txt", "r");
     output = fopen("output.txt", "w");
 
-    int numArr[MAX], index = 0, num;
-
-    // scanning contents of file and adding them to the buffer
+    /* while loop to go through the file and store values and their count into arrays */
+    int num, index = 0, numArr[MAX], countArr[MAX];
     while (fscanf(input, "%d", &num) != EOF)
     {
-        numArr[index] = num;
-        index++; // index will also serve as the number of elements in the file
-    }
-
-    // counting the number of occurrences of an element in the array
-    int countArr[index];
-    for (int j = 0; j < index; j++)
-    {
-        int currNum = numArr[j];
-        int count = 0;
-
-        // counting the number of occurences of current element
-        for (int k = 0; k < index; k++)
+        /* for loop checks if there is already a previous array entry that is the same as the current number */
+        int i, flag = 0;
+        for (i = 0; i < index; i++)
         {
-            int compNum = numArr[k];
-            if (currNum == compNum)
-                count++;
-        }
-
-        // placing count of element to corresponding array index
-        for (int m = 0; m < index; m++)
-        {
-            int compNum = numArr[m];
-            if (compNum == currNum)
-                countArr[m] = count;
-        }
-    }
-
-    // removing duplicates from array
-    for (int x = 0; x < index; x++)
-    {
-        for (int y = x + 1; y < index; y++)
-        {
-            if (numArr[x] == numArr[y])
+            if (numArr[i] == num)
             {
-                for (int k = y; k < index; k++)
-                {
-                    numArr[k] = numArr[k + 1];
-                    countArr[k] = countArr[k + 1];
-                }
-
-                index--;
-                y--;
+                flag = 1;
+                break;
             }
         }
-    }
 
-    // sorting arrays
-    for (int x = 0; x < index; x++)
-    {
-        for (int y = x + 1; y < index; y++)
+        /* if it is the first occurence of the current num, it increases the array
+           index and adds the new number to the end of the array */
+        if (flag == 0)
         {
-            // sorting both arrays by count
-            if (countArr[x] > countArr[y])
-            {
-                int tempC = countArr[x];
-                int tempN = numArr[x];
-
-                countArr[x] = countArr[y];
-                numArr[x] = numArr[y];
-
-                countArr[y] = tempC;
-                numArr[y] = tempN;
-            }
-
-            // sorting numbers array by value if count is the same
-            if (numArr[x] > numArr[y] && countArr[x] == countArr[y])
-            {
-                int tempN = numArr[x];
-                numArr[x] = numArr[y];
-                numArr[y] = tempN;
-            }
+            numArr[index] = num;
+            countArr[index] = 1;
+            index++;
         }
+
+        /* if the current number is a duplicate, it adds one to the count array
+           of the corresponding index of the first occurence of that number */
+        else if (flag == 1)
+            countArr[i]++;
     }
 
-    // printing results to output file
-    for (int z = 0; z < index; z++)
-    {
-        int n = numArr[z];
-        int c = countArr[z];
+    /* sorting operations */
+    sortOutput(countArr, numArr, index);
 
-        fprintf(output, "%d:%d\n", n, c);
-    }
+    /* Printing output to output file */
+    for (int z = 0; z < index - 1; z++)
+        fprintf(output, "%d:%d\n", numArr[z], countArr[z]);
+    fprintf(output, "%d:%d", numArr[z], countArr[z]);
 
     fclose(input);
     fclose(output);
+}
 
-    return 0;
+void swap(int arr[], int x, int y)
+{
+    int temp = arr[x];
+    arr[x] = arr[y];
+    arr[y] = temp;
+}
+
+void sortOutput(int countArr[], int numArr[], int index)
+{
+    for (int i = 0; i < index; i++)
+    {
+        for (int j = i + 1; j < index; j++)
+        {
+            /* sorting both arrays by count */
+            if (countArr[i] > countArr[j])
+            {
+                swap(countArr, i, j);
+                swap(numArr, i, j);
+            }
+
+            /* sorting numbers array by value if it has the same count */
+            if (numArr[i] > numArr[j] && countArr[i] == countArr[j])
+                swap(numArr, i, j);
+        }
+    }
 }
