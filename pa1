@@ -1,0 +1,110 @@
+#include <stdio.h>
+
+#define SAMPLE_SIZE 10
+#define NUMBER_OF_CLASS 2
+#define EPSILON 0.001
+
+float get_slope(float x1, float x2, float y1, float y2);
+float get_intercept(float midpointX, float midpointY, float slope, float x);
+int get_class(int left, int right, float testY, float testIntercept);
+
+int main()
+{
+    float averageX_1, averageY_1, averageX_2, averageY_2, x, y;
+
+    int classCount = 1;
+    while (classCount <= NUMBER_OF_CLASS)
+    {
+        /* GETTING ALL SAMPLES */
+        float sumX = 0L, sumY = 0L;
+        for (int i = 0; i < SAMPLE_SIZE; i++)
+        {
+            scanf("%f %f", &x, &y);
+
+            sumX += x;
+            sumY += y;
+        }
+
+        /* CALCULATING AVERAGE POINTS OF CURRENT CLASS CLASS */
+        if (classCount == 1)
+        {
+            averageX_1 = sumX / SAMPLE_SIZE;
+            averageY_1 = sumY / SAMPLE_SIZE;
+        }
+        else if (classCount == 2)
+        {
+            averageX_2 = sumX / SAMPLE_SIZE;
+            averageY_2 = sumY / SAMPLE_SIZE;
+        }
+
+        classCount++;
+    }
+
+    /* MIDPOINT OF AVERAGE CONNECTING LINE */
+    float aveMidpoint_X, aveMidpoint_Y, slope, separatingSlope;
+    aveMidpoint_X = (averageX_1 + averageX_2) / NUMBER_OF_CLASS;
+    aveMidpoint_Y = (averageY_1 + averageY_2) / NUMBER_OF_CLASS;
+
+    /* PERTURBING DIVIDE BY ZERO CASES */
+    if (averageX_1 == 0)
+        averageX_1 = EPSILON;
+    if (averageY_1 == 0)
+        averageY_1 = EPSILON;
+    if (averageX_2 == 0)
+        averageX_2 = EPSILON;
+    if (averageY_2 == 0)
+        averageY_2 = EPSILON;
+
+    slope = get_slope(averageX_1, averageX_2, averageY_1, averageY_2);
+    separatingSlope = (-1.0 / slope);
+
+    /* TESTING TEST POINTS */
+    float testX, testY, testIntercept;
+    int left, right;
+    while (scanf("%f%f", &testX, &testY))
+    {
+        /* finds y-intercept of class 1 and assigns classes to the left/right side of the separating line */
+        float interceptY_1 = get_intercept(aveMidpoint_X, aveMidpoint_Y, separatingSlope, averageX_1);
+        if (interceptY_1 >= averageY_1)
+        {
+            left = 1;
+            right = 2;
+        }
+        /* if the class 1-y intercept is greater than its actual average y value,
+           then class 1 is on the left side. otherwise its on the right */
+        else if (interceptY_1 <= averageY_1)
+        {
+            left = 2;
+            right = 1;
+        }
+
+        /* finds y-intercept of the test points and finds its class */
+        testIntercept = get_intercept(aveMidpoint_X, aveMidpoint_Y, separatingSlope, testX);
+        printf("class %d\n", get_class(left, right, testY, testIntercept));
+    }
+
+    return 0;
+}
+
+float get_slope(float x1, float x2, float y1, float y2)
+{
+    float x, y;
+    x = x2 - x1;
+    y = y2 - y1;
+    return (y / x);
+}
+
+float get_intercept(float midpointX, float midpointY, float slope, float x)
+{
+    return (midpointY + ((slope) * (x - midpointX)));
+}
+
+int get_class(int left, int right, float testY, float testIntercept)
+{
+    if (testY > testIntercept)
+        return right;
+
+    /* if the y value is greater than the y intercept, it is on the right class.*/
+    else if (testY < testIntercept)
+        return left;
+}
