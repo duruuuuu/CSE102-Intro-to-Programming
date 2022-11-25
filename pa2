@@ -1,0 +1,112 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+
+    char *inputFile = "input.txt";
+    char *outputFile = "output.txt";
+    FILE *INPUT;
+    FILE *OUTPUT;
+
+    char array[100];
+    char buffer[100];
+    int id = 0;
+
+    INPUT = fopen(inputFile, "r");
+
+    // scans and counts each element in the file and fills the buffer
+    while (fscanf(INPUT, "%s", buffer) != EOF)
+    {
+        int num = (int)atoi(buffer); // converts elements of file to int type
+        array[id] = num;             // fills contents of array with however many elements are in num
+        id = id + 1;                 // counts the elements in the file
+    }
+
+    int index = 0; // specific element in array
+    int sub_index = 0;
+    int sub_index_2 = 0;
+    int numArr[id];      // stores the individual elements
+    int numArrCount[id]; // stores the number of repititions of each element
+
+    for (index = 0; index < id; index++)
+    {
+        int number = array[index]; // number= the specific integer element
+        int count = 0;             // count= number of times an element is repeated
+
+        for (sub_index = 0; sub_index < id; sub_index++)
+        {
+            // sub_number= the element that is being compared to number
+            int sub_number = array[sub_index];
+            if (number == sub_number) // counts the number of times an element is repeated
+            {
+                count = count + 1;
+            }
+        }
+
+        // fills the arrays taht will be printed in output
+        for (sub_index_2 = 0; sub_index_2 < id; sub_index_2++)
+        {
+            int sub_number = array[sub_index_2];
+            if (sub_number == number)
+            {
+                numArr[sub_index_2] = number;
+                numArrCount[sub_index_2] = count;
+            }
+        }
+    }
+
+    int i, j, k;
+    for (i = 0; i < id; i++)
+    {
+        for (j = i + 1; j < id;)
+        {
+            if (numArr[j] == numArr[i])
+            {
+                for (k = j; k < id; k++)
+                {
+                    numArr[k] = numArr[k + 1];
+                    numArrCount[k] = numArrCount[k + 1];
+                }
+                id--;
+            }
+            else
+                j++;
+        }
+    }
+
+    int temp, x, n;
+    for (temp = 1; temp < id; temp++)
+    {
+        for (i = 0; i < id - 1; i++)
+        {
+            if (numArrCount[i] > numArrCount[i + 1])
+            {
+                n = numArr[i];
+                x = numArrCount[i];
+
+                numArrCount[i] = numArrCount[i + 1];
+                numArr[i] = numArr[i + 1];
+
+                numArrCount[i + 1] = x;
+                numArr[i + 1] = n;
+            }
+        }
+    }
+
+    // creating output file
+    OUTPUT = fopen(outputFile, "w+");
+
+    // prints arrays of the numbers and amounts of repitions in the new output file
+    for (i = 0; i < id; i++)
+    {
+        int n = numArr[i];
+        int c = numArrCount[i];
+        fprintf(OUTPUT, "%d:%d\n", n, c);
+    }
+
+    fclose(INPUT);
+    fclose(OUTPUT);
+
+    return 0;
+}
