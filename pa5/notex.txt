@@ -1,0 +1,7 @@
+1. Read several text files
+   - These files include text which has characters from the list in the pdf
+   - Read 6 files
+   - Compare the text files by counting the pairs of characterss
+
+Store counts of bigrams in an array (2d or 1d either can be)
+Don't store the file in memory
