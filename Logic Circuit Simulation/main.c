@@ -179,7 +179,7 @@ int main()
     }
 
     int rows = INIT_SIZE, cols = inputGateCount;
-    gate_t **inputsArr = (gate_t **)malloc(rows * sizeof(gate_t **)); // allocating memory to inputs array for input gates
+    int **inputsArr = (int **)malloc(rows * sizeof(int **));
     if (inputsArr == NULL)
     {
         // Memory allocation failed
@@ -188,18 +188,17 @@ int main()
     }
 
     for (int k = 0; k < rows; k++) // allocating memory to arrays
-    {
-        inputsArr[k] = (gate_t *)malloc(cols * sizeof(gate_t *));
-    }
+        inputsArr[k] = (int *)malloc(cols * sizeof(int *));
 
     /* GOING THROUGH THE INPUT FILE */
+
     while (((*(n)) = fgetc(input)))
     {
         /* realocating memory in struct nad int arrays in case there is no space left */
         if (i == rows)
         {
             rows *= 2;
-            inputsArr = (gate_t **)realloc(inputsArr, rows * sizeof(gate_t **));
+            inputsArr = (int **)realloc(inputsArr, rows * sizeof(int **));
         }
 
         /* jump to next row if file pointer reaches newline */
@@ -214,9 +213,8 @@ int main()
         if (feof(input))
             break;
 
-        num = atoi(n);                 // converting character to integer
-        inputsArr[i][j].output = num;  // storing values in int array before stroing them in struct array
-        inputsArr[i][j].inputs = NULL; // assigning inputs to null so we can finds the base case of the eval function
+        num = atoi(n); // converting character to integer
+        inputsArr[i][j] = num;
         j++;
     }
 
@@ -241,9 +239,10 @@ int main()
                         return -1;
                     }
 
-                    *gatesArr[n].inputs = &inputsArr[i][j]; // assigning input address to inputs pointer
-                    gatesArr[n].numInputs = 1;              // assigning number of inputs in gate
-                    flag = n + 1;                           // marking where we left off on the input gates array
+                    *gatesArr[n].inputs = NULL; // assigning input address to inputs pointer
+                    gatesArr[n].output = inputsArr[i][j];
+                    gatesArr[n].numInputs = 1; // assigning number of inputs in gate
+                    flag = n + 1;              // marking where we left off on the input gates array
                     break;
                 }
             }
@@ -257,7 +256,7 @@ int main()
                 break;
         }
         int output = eval(&gatesArr[g]);
-        printf("final output: %d\n", output);
+        printf("%d\n", output);
         reset_outputs(gatesArr, count);
     }
 
@@ -285,53 +284,69 @@ void reset_outputs(gate_t *arr, int size)
 int eval(gate_t *gate)
 {
     int output;
-    switch (gate->type)
+    if (gate->output == UNCHECKED_GATE_VAL) // evaluate only if hte
     {
-
-    case INPUT:
-        gate->output = gate->inputs[0]->output;
-        return gate->output;
-
-    case AND:
-        output = eval(gate->inputs[0]);
-        for (int i = 1; i < gate->numInputs; i++)
-            output = output && eval(gate->inputs[i]);
-
-        return output;
-
-    case OR:
-        output = 0;
-        for (int i = 0; i < gate->numInputs; i++)
-            output = output || eval(gate->inputs[i]);
-
-        return output;
-
-    case NOT:
-        return !eval(gate->inputs[0]);
-
-    case FLIPFLOP:
-        if (gate->inputs[0]->output == 1 && gate->inputs[0]->former_out == 0)
+        switch (gate->type)
         {
-            gate->former_out = 1;
-            return 1;
+
+        case INPUT:
+            return gate->output;
+
+        case AND:
+            output = eval(gate->inputs[0]);
+            for (int i = 1; i < gate->numInputs; i++)
+                output = output && eval(gate->inputs[i]);
+
+            return output;
+
+        case OR:
+            output = eval(gate->inputs[0]);
+            for (int i = 1; i < gate->numInputs; i++)
+                output = output || eval(gate->inputs[i]);
+
+            return output;
+
+        case NOT:
+            output = !eval(gate->inputs[0]);
+            gate->output = output;
+            return output;
+
+        case FLIPFLOP:
+            if (eval(gate->inputs[0]) == 1 && gate->former_out == 0)
+            {
+                gate->former_out = 1;
+                return 1;
+            }
+
+            else if (eval(gate->inputs[0]) == 0 && gate->former_out == 1)
+            {
+                gate->former_out = 0;
+                return 1;
+            }
+
+            else if (eval(gate->inputs[0]) == 0 && gate->former_out == 0)
+            {
+
+                gate->former_out = 0;
+                return 0;
+            }
+
+            else if (eval(gate->inputs[0]) == 1 && gate->former_out == 1)
+            {
+
+                gate->former_out = 1;
+                return 0;
+            }
+
+        case OUTPUT:
+            return eval(gate->inputs[0]);
+
+        default:
+            // Invalid gate type
+            return -1;
         }
-
-        else if (gate->inputs[0]->output == 0 && gate->inputs[0]->former_out == 1)
-        {
-            gate->former_out = 0;
-            return 0;
-        }
-
-        else
-        {
-            return gate->former_out;
-        }
-
-    case OUTPUT:
-        return eval(gate->inputs[0]);
-
-    default:
-        // Invalid gate type
-        return -1;
     }
+
+    else
+        return gate->output;
 }
