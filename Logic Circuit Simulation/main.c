@@ -1,54 +1,11 @@
-/*
-    implementing/ simulating a logic circuit
-
-    - circuit.txt starts either with a connection or gate name
-    - you can assume that the gates already exist if they are being connected
-
-    **Read the circuit.txt file only once. Do not keep going back/ repeatedly parsing
-    ** there wont be any loop connections or connections to itself
-    - Represent the connections as a tree
-    - Every gate has only one output but can have many inputs
-
-    - Have structs for the definitions of the logic gates and use the structs to call the gates?
-    - You have to use dynamic allocation :(
-    - Use the connection information and use the pointers to connect them
-    * must have pointer connection between structs
-
-    How to solve:
-    1. Create a structure for the gate
-    * for inputs you can have an array of inputs
-
-    eval(struct *gate)
-    - repeatedly call evaluate function for each gate
-    - start calling the evaluation func from the output and end it until the inputs
-    - use recursion in this function
-
-    - If you need to evaluate a gate twice, store a flag inside the struct saying it was laready evaluated.
-    - Have a component storing the output of the gate.
-    - If the gate has laalreadyreadt been evaluated just get the output.
-
-    - THis function finds the output of the gate by checking its inputs
-
-
-    Topics to study:
-    - Struct
-    - Dynamic Memory Allocation
-    - Trees
-    - Linked Lists
-
-
-    2. Count the gates and then store them in a partially filled array?
-*/
-
-/* questions: is it sure that each row will contain only 3 words */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#define MAX_LEN 20
-#define INIT_SIZE 10
-#define INIT_INPUT 2
-#define UNCHECKED_GATE_VAL -999
+#define MAX_LEN 20              /* Maximum length of lines in files */
+#define INIT_SIZE 10            /* Initial size of arrays */
+#define INIT_INPUT 10           /* Initial number of inputs for AND and OR gates*/
+#define UNCHECKED_GATE_VAL -999 /* Flag value for un-evaluated gates */
 
 typedef enum
 {
@@ -174,6 +131,7 @@ int main()
         /* if it is a new connection */
         else if (strcmp(keyword, "CONNECTION") == 0)
         {
+
             int from, to;
             for (from = 0; from < count; from++) // getting the source gate
             {
@@ -187,16 +145,18 @@ int main()
                     break;
             }
 
-            gatesArr[to].inputs = malloc(sizeof(gate_t) * inputCurrentSize); // allocating memory enough for 2 inputs in the pointer
-            if (gatesArr[to].inputs == NULL)
+            if (gatesArr[to].inputs == NULL) // allocating memory only if there are no inputs in the gate yet
             {
-                // Memory allocation failed
-                printf("Error: Memory allocation failed\n");
-                return -1;
+                gatesArr[to].inputs = malloc(sizeof(gate_t) * inputCurrentSize); // allocating memory enough for 2 inputs in the pointer
+                if (gatesArr[to].inputs == NULL)
+                {
+                    // Memory allocation failed
+                    printf("Error: Memory allocation failed\n");
+                    return -1;
+                }
             }
-
-            *gatesArr[to].inputs = &gatesArr[from]; // asiging the address of the input to the inputs pointer
-            gatesArr[to].numInputs += 1;            // keepig track of tbhe number of inputs in the gate
+            gatesArr[to].inputs[gatesArr[to].numInputs] = &gatesArr[from]; // asiging the address of the input to the inputs pointer
+            gatesArr[to].numInputs += 1;                                   // keepig track of the number of inputs in the gate
             inputCount++;
 
             if (inputCount == inputCurrentSize) // reallocating memory
@@ -257,7 +217,6 @@ int main()
     i++;
 
     /* assigning the int binary values ot the input gate structure as well as the other values */
-    printf("gate: %s, numInputs: %d\n", gatesArr[2].name, gatesArr[2].numInputs);
     /* ASSIGNING INPUTS FROM FILE TO INPUT GATES AND CALLING EVALUATION FUNCTION FOR SIMULATIONS */
     int flag = 0;
     gate_t *outputGate = NULL;
@@ -280,8 +239,8 @@ int main()
                     }
                     *gatesArr[n].inputs = &inputsArr[k][m];      // assigning input address to inputs pointer
                     gatesArr[n].output = inputsArr[k][m].output; // assigning the output to the gate aswell
-                    printf("%s:%d ", gatesArr[n].name, gatesArr[n].output);
-                    flag = n + 1; // marking where we left off on the input gates array
+                    gatesArr[n].numInputs = 1;                   // assigning number of inputs in gate
+                    flag = n + 1;                                // marking where we left off on the input gates array
                     break;
                 }
             }
@@ -291,19 +250,18 @@ int main()
         for (g = 0; g < count; g++) // looking for the output gate aka root node so we can call the eval function
         {
             if (gatesArr[g].type == OUTPUT)
-            {
-                // outputGate = &gatesArr[n];
                 break;
-            }
         }
-        // printf("output index: %d\n", g);
-        printf("output: %d\n", gatesArr[g].output);
+
+        printf("%s:%d , %s:%d ", inputsArr[0]->name, inputsArr[0]->output, inputsArr[1]->name, inputsArr[1]->output);
         eval(&gatesArr[g]);
+        printf("output%d\n", gatesArr[g].output);
     }
 
     /* freeing allocated memory */
     free(gatesArr);
     free(inputsArr);
+
     /* closing files */
     fclose(circuit);
     fclose(input);
