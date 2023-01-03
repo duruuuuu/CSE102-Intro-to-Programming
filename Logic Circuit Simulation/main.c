@@ -3,12 +3,12 @@
 #include <stdlib.h>
 
 #define MAX_LEN 20              /* Maximum length of lines in files */
-#define INIT_SIZE 10            /* Initial size of arrays */
-#define INIT_INPUT 10           /* Initial number of inputs for AND and OR gates*/
+#define INIT_SIZE 10            /* Initial size of arrays used for allocateing memory */
 #define UNCHECKED_GATE_VAL -999 /* Flag value for un-evaluated gates */
 
-typedef enum
+typedef enum gate_enum
 {
+    /* enumerated type for assigning gates */
     INPUT,
     OUTPUT,
     AND,
@@ -28,14 +28,14 @@ struct gate_s
 };
 typedef struct gate_s gate_t;
 
-void eval(gate_t *gate);
-int evalOr(gate_t *gate);
-int evalAnd(gate_t *gate);
-int evalNot(gate_t *gate);
-int evalFlipFlop(gate_t *gate);
+void reset_outputs(gate_t *arr, int size);
+int eval(gate_t *gate);
 
 gate_enum convert_gate_type(char *str)
 {
+    /* this function is used to convert the string of the gate type
+       from the file to a corresponding enumerated type */
+
     if (strcmp(str, "INPUT") == 0)
         return INPUT;
 
@@ -59,7 +59,8 @@ gate_enum convert_gate_type(char *str)
 
 gate_t fill_struct(gate_enum type, char name[], struct gate_s **inputs, int output, int former_out)
 {
-    /* This function is used to assign the struct element variables */
+    /* This function is used to assign the struct element variables according to the
+       information taken from the file */
     gate_t s;
     s.type = type;
     strcpy(s.name, name);
@@ -95,16 +96,16 @@ int main()
     char keyword[MAX_LEN], input1[MAX_LEN], input2[MAX_LEN];
 
     gate_t *gatesArr = (gate_t *)malloc(sizeof(gate_t) * INIT_SIZE); // allocating memory to array for storing gates structs
-    if (gatesArr == NULL)
+    if (gatesArr == NULL)                                            // error checking memory allocation
     {
         // Memory allocation failed
         printf("Error: Memory allocation failed\n");
         return -1;
     }
 
-    gate_t currGate;
+    gate_t currGate;    // used to store the current gate in the file pointer
     gate_enum gateType; // used to get and convert the type of the gate
-    int count = 0, currentSize = INIT_SIZE, inputGateCount = 0, inputCurrentSize = INIT_INPUT, inputCount = 0;
+    int count = 0, currentSize = INIT_SIZE, inputGateCount = 0, inputCurrentSize = INIT_SIZE, inputCount = 0;
     while (fscanf(circuit, "%s%s%s", keyword, input1, input2) != EOF)
     {
         fflush(circuit); // flushing file to make sure there is no problem while scanning the words
@@ -194,68 +195,70 @@ int main()
     /* GOING THROUGH THE INPUT FILE */
     while (((*(n)) = fgetc(input)))
     {
-        if (i == rows) // realocating memory in struct nad int arrays in case there is no space left
+        /* realocating memory in struct nad int arrays in case there is no space left */
+        if (i == rows)
         {
             rows *= 2;
             inputsArr = (gate_t **)realloc(inputsArr, rows * sizeof(gate_t **));
         }
 
-        if (*n == '\n') // jump to next row if file pointer reaches newline
+        /* jump to next row if file pointer reaches newline */
+        if (*n == '\n')
         {
             i++;      // increasing row count
             j = 0;    // resetting coloumn count
             continue; // going to the next number in the file
         }
 
-        if (feof(input)) // stop the program if it readhes end of file
+        /* stop the program if it readhes end of file */
+        if (feof(input))
             break;
 
-        num = atoi(n);                // converting character to integer
-        inputsArr[i][j].output = num; // storing values in int array before stroing them in struct array
+        num = atoi(n);                 // converting character to integer
+        inputsArr[i][j].output = num;  // storing values in int array before stroing them in struct array
+        inputsArr[i][j].inputs = NULL; // assigning inputs to null so we can finds the base case of the eval function
         j++;
     }
-    i++;
 
-    /* assigning the int binary values ot the input gate structure as well as the other values */
     /* ASSIGNING INPUTS FROM FILE TO INPUT GATES AND CALLING EVALUATION FUNCTION FOR SIMULATIONS */
-    int flag = 0;
+    int flag = 0, simulationCount = i + 1;
     gate_t *outputGate = NULL;
-    for (int k = 0; k < i; k++) // going through simulations
+    for (i = 0; i < simulationCount; i++) // going through simulations (i is also teh simulation count)
     {
         flag = 0;
-        for (int m = 0; m < inputGateCount; m++) // going through inputs
+        for (j = 0; j < inputGateCount; j++) // going through inputs
         {
-            for (int n = flag; n < i; n++)
+            for (int n = flag; n < count; n++)
             {
                 if (gatesArr[n].type == INPUT)
                 {
                     /* connecting pointers from simulation inputs to input struct pointers */
-                    gatesArr[n].inputs = malloc(sizeof(int *)); // allocating memory to inputs pointer
+                    gatesArr[n].inputs = malloc(sizeof(gate_t *)); // allocating memory to inputs pointer
                     if (gatesArr[n].inputs == NULL)
                     {
                         // Memory allocation failed
                         printf("Error: Memory allocation failed\n");
                         return -1;
                     }
-                    *gatesArr[n].inputs = &inputsArr[k][m];      // assigning input address to inputs pointer
-                    gatesArr[n].output = inputsArr[k][m].output; // assigning the output to the gate aswell
-                    gatesArr[n].numInputs = 1;                   // assigning number of inputs in gate
-                    flag = n + 1;                                // marking where we left off on the input gates array
+
+                    *gatesArr[n].inputs = &inputsArr[i][j]; // assigning input address to inputs pointer
+                    gatesArr[n].numInputs = 1;              // assigning number of inputs in gate
+                    flag = n + 1;                           // marking where we left off on the input gates array
                     break;
                 }
             }
         }
 
+        /* looking for the root node aka the output gate so we can call the eval function with it */
         int g = 0;
-        for (g = 0; g < count; g++) // looking for the output gate aka root node so we can call the eval function
+        for (g = 0; g < count; g++)
         {
             if (gatesArr[g].type == OUTPUT)
                 break;
         }
-
-        printf("%s:%d , %s:%d ", inputsArr[0]->name, inputsArr[0]->output, inputsArr[1]->name, inputsArr[1]->output);
-        eval(&gatesArr[g]);
-        printf("output%d\n", gatesArr[g].output);
+        int output = eval(&gatesArr[g]);
+        printf("final output: %d\n", output);
+        reset_outputs(gatesArr, count);
     }
 
     /* freeing allocated memory */
@@ -269,74 +272,66 @@ int main()
     return 0;
 }
 
-int evalAnd(gate_t *gate)
+void reset_outputs(gate_t *arr, int size)
 {
-    int result = gate->inputs[0]->output;
-    for (int i = 1; i < gate->numInputs; i++)
+    for (int i = 0; i < size; i++)
     {
-        result = result && gate->inputs[i]->output;
+        if (arr[i].type == INPUT)
+            continue;
+        arr[i].output = UNCHECKED_GATE_VAL;
     }
-    return result;
 }
 
-int evalOr(gate_t *gate)
+int eval(gate_t *gate)
 {
-    int result = gate->inputs[0]->output;
-    int numInputs = sizeof(gate->inputs) / sizeof(gate->inputs[0]);
-    for (int i = 1; i < gate->numInputs; i++)
-    {
-        result = result || gate->inputs[i]->output;
-    }
-    return result;
-}
-
-int evalNot(gate_t *gate)
-{
-    return !gate->inputs[0]->output;
-}
-
-void eval(gate_t *gate)
-{
-    //  If this gate has already been evaluated, return its output
-    if (gate->output != UNCHECKED_GATE_VAL)
-        return;
-
-    // Evaluate all input gates first
-    if (gate->inputs != NULL)
-    {
-        for (int i = 0; i < gate->numInputs; i++)
-        {
-            eval(gate->inputs[i]);
-        }
-    }
-
-    // Calculate the output of this gate based on its type and inputs
+    int output;
     switch (gate->type)
     {
-    case INPUT:
-        // Input gates don't have any inputs, so their output is already set
-        break;
 
-    case OUTPUT:
-        // Output gates don't have any outputs, so their output is the same as their input
-        eval(gate->inputs[0]);
+    case INPUT:
         gate->output = gate->inputs[0]->output;
-        break;
+        return gate->output;
 
     case AND:
-        gate->output = evalAnd(gate);
-        break;
+        output = eval(gate->inputs[0]);
+        for (int i = 1; i < gate->numInputs; i++)
+            output = output && eval(gate->inputs[i]);
+
+        return output;
 
     case OR:
-        gate->output = evalOr(gate);
-        break;
+        output = 0;
+        for (int i = 0; i < gate->numInputs; i++)
+            output = output || eval(gate->inputs[i]);
+
+        return output;
 
     case NOT:
-        gate->output = evalNot(gate);
-        break;
+        return !eval(gate->inputs[0]);
 
     case FLIPFLOP:
-        // Implement the logic for a flip-flop gate here
-        break;
+        if (gate->inputs[0]->output == 1 && gate->inputs[0]->former_out == 0)
+        {
+            gate->former_out = 1;
+            return 1;
+        }
+
+        else if (gate->inputs[0]->output == 0 && gate->inputs[0]->former_out == 1)
+        {
+            gate->former_out = 0;
+            return 0;
+        }
+
+        else
+        {
+            return gate->former_out;
+        }
+
+    case OUTPUT:
+        return eval(gate->inputs[0]);
+
+    default:
+        // Invalid gate type
+        return -1;
     }
 }
